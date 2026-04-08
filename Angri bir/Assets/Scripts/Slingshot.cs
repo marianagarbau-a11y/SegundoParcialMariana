@@ -8,7 +8,12 @@ public class Slingshot : MonoBehaviour
     private bool isDragging = false;
     private Vector2 startPoint;
 
-    public float maxDragDistance = 2.5f;
+    public float maxDragDistance = 4f;
+
+    // Sistema de disparos
+    public int maxShots = 3;
+    private int shotsLeft;
+    private bool canShoot = true;
 
     void Start()
     {
@@ -18,12 +23,14 @@ public class Slingshot : MonoBehaviour
         startPoint = transform.position;
 
         spring.connectedAnchor = startPoint;
-        spring.enabled = false; // importante
+        spring.enabled = false;
+
+        shotsLeft = maxShots;
     }
 
     void Update()
     {
-        if (isDragging)
+        if (isDragging && canShoot)
         {
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
@@ -40,16 +47,29 @@ public class Slingshot : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (!canShoot) return;
+
         isDragging = true;
         rb.isKinematic = true;
     }
 
     void OnMouseUp()
     {
+        if (!canShoot) return;
+
         isDragging = false;
         rb.isKinematic = false;
 
         spring.enabled = true;
+
+        shotsLeft--;
+        Debug.Log("Disparos restantes: " + shotsLeft);
+
+        if (shotsLeft <= 0)
+        {
+            canShoot = false;
+            Debug.Log("Se acabaron los disparos");
+        }
 
         Invoke("Release", 0.1f);
     }
@@ -57,5 +77,17 @@ public class Slingshot : MonoBehaviour
     void Release()
     {
         spring.enabled = false;
+
+        if (shotsLeft > 0)
+        {
+            Invoke("ResetBird", 1.5f);
+        }
+    }
+
+    void ResetBird()
+    {
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        rb.position = startPoint;
     }
 }
